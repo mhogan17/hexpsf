@@ -58,4 +58,5 @@ class PupilPlane:
         self.B_star = np.array(B_vec, dtype=np.float32)
         self.rho = rt[0, :].astype(np.float32)
         self.theta = rt[1, :].astype(np.float32)
+        self.Zernike = np.zeros_like(self.rho)
 
