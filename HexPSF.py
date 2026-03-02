@@ -1,10 +1,94 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as tck
 from matplotlib.patches import RegularPolygon
 import PupilPlane
 import OpticsParams
 import HexPP
 from scipy.ndimage import gaussian_filter
+
+def show_CRBs(psf):
+    zs = np.array([(i - 10) / 20 for i in range(0, 21)])
+    CRBx = [[], [], [], [], [], []]
+    CRBy = [[], [], [], [], [], []]
+    CRBz = [[], [], [], [], [], []]
+
+    for z in zs:
+        CRBx[0].append(1 / np.sqrt(psf.I_00(0, 0, z, 0.513, 2500, 100)))
+        CRBx[1].append(1 / np.sqrt(psf.I_00(0, 0, z, 0.579, 2500, 100)))
+        CRBx[2].append(1 / np.sqrt(psf.I_00(0, 0, z, 0.683, 2500, 100)))
+
+        CRBx[3].append(1 / np.sqrt(psf.I_00(0, 0, z, 0.513, 2500, 400)))
+        CRBx[4].append(1 / np.sqrt(psf.I_00(0, 0, z, 0.579, 2500, 400)))
+        CRBx[5].append(1 / np.sqrt(psf.I_00(0, 0, z, 0.683, 2500, 400)))
+
+        CRBy[0].append(1 / np.sqrt(psf.I_11(0, 0, z, 0.513, 2500, 100)))
+        CRBy[1].append(1 / np.sqrt(psf.I_11(0, 0, z, 0.579, 2500, 100)))
+        CRBy[2].append(1 / np.sqrt(psf.I_11(0, 0, z, 0.683, 2500, 100)))
+
+        CRBy[3].append(1 / np.sqrt(psf.I_11(0, 0, z, 0.513, 2500, 400)))
+        CRBy[4].append(1 / np.sqrt(psf.I_11(0, 0, z, 0.579, 2500, 400)))
+        CRBy[5].append(1 / np.sqrt(psf.I_11(0, 0, z, 0.683, 2500, 400)))
+
+        CRBz[0].append(1 / np.sqrt(psf.I_22(0, 0, z, 0.513, 2500, 100)))
+        CRBz[1].append(1 / np.sqrt(psf.I_22(0, 0, z, 0.579, 2500, 100)))
+        CRBz[2].append(1 / np.sqrt(psf.I_22(0, 0, z, 0.683, 2500, 100)))
+
+        CRBz[3].append(1 / np.sqrt(psf.I_22(0, 0, z, 0.513, 2500, 400)))
+        CRBz[4].append(1 / np.sqrt(psf.I_22(0, 0, z, 0.579, 2500, 400)))
+        CRBz[5].append(1 / np.sqrt(psf.I_22(0, 0, z, 0.683, 2500, 400)))
+
+    fig = plt.figure()
+    ax0 = fig.add_subplot(131)
+    ax0.plot(zs, CRBx[0], color='green')
+    ax0.plot(zs, CRBx[1], color='orange')
+    ax0.plot(zs, CRBx[2], color='red')
+    ax0.plot(zs, CRBx[3], color='green', linestyle='dashed')
+    ax0.plot(zs, CRBx[4], color='orange', linestyle='dashed')
+    ax0.plot(zs, CRBx[5], color='red', linestyle='dashed')
+    ax0.set_ylim(0.025, 0.115)
+    ax0.set_ylabel("$CRB_{x_0}\ (\mu m)$")
+    ax0.set_xlabel("$z_{p}\ (\mu m)$")
+    ax0.minorticks_on()
+    ax0.yaxis.set_minor_locator(tck.AutoMinorLocator(2))
+    ax0.grid()
+    ax0.grid(which='minor', linestyle=':', linewidth='0.5')
+
+    ax1 = fig.add_subplot(132)
+    ax1.plot(zs, CRBy[0], color='green')
+    ax1.plot(zs, CRBy[1], color='orange')
+    ax1.plot(zs, CRBy[2], color='red')
+    ax1.plot(zs, CRBy[3], color='green', linestyle='dashed')
+    ax1.plot(zs, CRBy[4], color='orange', linestyle='dashed')
+    ax1.plot(zs, CRBy[5], color='red', linestyle='dashed')
+    ax1.set_ylim(0.025, 0.115)
+    ax1.set_ylabel("$CRB_{y_0}\ (\mu m)$")
+    ax1.set_xlabel("$z_{p}\ (\mu m)$")
+    ax1.minorticks_on()
+    ax1.yaxis.set_minor_locator(tck.AutoMinorLocator(2))
+    ax1.grid()
+    ax1.grid(which='minor', linestyle=':', linewidth='0.5')
+
+    ax2 = fig.add_subplot(133)
+    ax2.plot(zs, CRBz[0], color='green', label='$\lambda = 513\ nm,\ B=100$')
+    ax2.plot(zs, CRBz[1], color='orange', label='$\lambda = 579\ nm,\ B=100$')
+    ax2.plot(zs, CRBz[2], color='red', label='$\lambda = 683\ nm,\ B=100$')
+    ax2.plot(zs, CRBz[3], color='green', linestyle='dashed', label='$\lambda = 513\ nm,\ B=400$')
+    ax2.plot(zs, CRBz[4], color='orange', linestyle='dashed', label='$\lambda = 579\ nm,\ B=400$')
+    ax2.plot(zs, CRBz[5], color='red', linestyle='dashed', label='$\lambda = 683\ nm,\ B=400$')
+    ax2.set_ylim(0.025, 0.115)
+    ax2.set_ylabel("$CRB_{z_p}\ (\mu m)$")
+    ax2.set_xlabel("$z_{p}\ (\mu m)$")
+    ax2.minorticks_on()
+    ax2.yaxis.set_minor_locator(tck.AutoMinorLocator(2))
+    ax2.grid()
+    ax2.grid(which='minor', linestyle=':', linewidth='0.5')
+    ax2.legend(loc='upper right', bbox_to_anchor=(-1.65, 1), shadow=True, fancybox=True)
+    plt.tight_layout()
+    plt.show()
+
+def add_noise(psf):
+    return np.random.poisson(psf)
 
 def zernike_polynomials(j, rho, theta):
     phase = np.zeros_like(rho)
@@ -349,9 +433,9 @@ class HexPSF:
             axs[i].set_xticks([])
             axs[i].set_yticks([])
 
-        axs[1].imshow(self.intensity(x0=0, y0=0, zp=0, wl=0.513, N=100000, B=1000))
-        axs[2].imshow(self.intensity(x0=0, y0=0, zp=0, wl=0.579, N=100000, B=1000))
-        axs[3].imshow(self.intensity(x0=0, y0=0, zp=0, wl=0.683, N=100000, B=1000))
+        axs[1].imshow(add_noise(self.intensity(x0=0, y0=0, zp=0, wl=0.513, N=25000, B=100)))
+        axs[2].imshow(add_noise(self.intensity(x0=0, y0=0, zp=0, wl=0.579, N=25000, B=100)))
+        axs[3].imshow(add_noise(self.intensity(x0=0, y0=0, zp=0, wl=0.683, N=25000, B=100)))
         # axs[4].imshow(self.intensity(x0=0, y0=0, zp=0, wl=0.751, corrections=[0, 0, 0, 0]))
 
         axs[0].text(0.5, 1.15, "Phase Plate", ha='center', va='center', fontsize=12)
@@ -365,115 +449,12 @@ class HexPSF:
 
 
 
-psf = HexPSF()
-
-h1 = 2.24
-h2 = 5.09
-psf.set_plate([0, h1, h2, 0, h1, h2])
-# psf.show()
-
-zs = np.array([(i - 10)/ 20 for i in range(0, 21)])
-CRBx = [[], [], [], [], [], []]
-CRBy = [[], [], [], [], [], []]
-CRBz = [[], [], [], [], [], []]
-
-for z in zs:
-    CRBx[0].append(1 / np.sqrt(psf.I_00(0,0, z,0.513, 2500, 100)))
-    CRBx[1].append(1 / np.sqrt(psf.I_00(0, 0, z, 0.579, 2500, 100)))
-    CRBx[2].append(1 / np.sqrt(psf.I_00(0, 0, z, 0.683, 2500, 100)))
-
-    CRBx[3].append(1 / np.sqrt(psf.I_00(0, 0, z, 0.513, 2500, 400)))
-    CRBx[4].append(1 / np.sqrt(psf.I_00(0, 0, z, 0.579, 2500, 400)))
-    CRBx[5].append(1 / np.sqrt(psf.I_00(0, 0, z, 0.683, 2500, 400)))
-
-    CRBy[0].append(1 / np.sqrt(psf.I_11(0,0, z,0.513, 2500, 100)))
-    CRBy[1].append(1 / np.sqrt(psf.I_11(0, 0, z, 0.579, 2500, 100)))
-    CRBy[2].append(1 / np.sqrt(psf.I_11(0, 0, z, 0.683, 2500, 100)))
-
-    CRBy[3].append(1 / np.sqrt(psf.I_11(0, 0, z,0.513, 2500, 400)))
-    CRBy[4].append(1 / np.sqrt(psf.I_11(0, 0, z, 0.579, 2500, 400)))
-    CRBy[5].append(1 / np.sqrt(psf.I_11(0, 0, z, 0.683, 2500, 400)))
-
-    CRBz[0].append(1/np.sqrt(psf.I_22(0,0,z, 0.513, 2500, 100)))
-    CRBz[1].append(1/np.sqrt(psf.I_22(0, 0, z, 0.579, 2500, 100)))
-    CRBz[2].append(1/np.sqrt(psf.I_22(0, 0, z, 0.683, 2500, 100)))
-
-    CRBz[3].append(1/np.sqrt(psf.I_22(0, 0, z, 0.513, 2500, 400)))
-    CRBz[4].append(1/np.sqrt(psf.I_22(0, 0, z, 0.579, 2500, 400)))
-    CRBz[5].append(1/np.sqrt(psf.I_22(0, 0, z, 0.683, 2500, 400)))
-
-fig = plt.figure()
-ax0 = fig.add_subplot(131)
-ax0.plot(zs, CRBx[0], color='green')
-ax0.plot(zs, CRBx[1], color='orange')
-ax0.plot(zs, CRBx[2], color='red')
-ax0.plot(zs, CRBx[3], color='green', linestyle='dashed')
-ax0.plot(zs, CRBx[4], color='orange', linestyle='dashed')
-ax0.plot(zs, CRBx[5], color='red', linestyle='dashed')
-ax0.set_ylim(0.01, 0.11)
-ax0.set_ylabel("$CRB_{x_0}\ (\mu m)$")
-ax0.set_xlabel("$z_{p}\ (\mu m)$")
-ax0.grid()
-
-ax1 = fig.add_subplot(132)
-ax1.plot(zs, CRBy[0], color='green')
-ax1.plot(zs, CRBy[1], color='orange')
-ax1.plot(zs, CRBy[2], color='red')
-ax1.plot(zs, CRBy[3], color='green', linestyle='dashed')
-ax1.plot(zs, CRBy[4], color='orange', linestyle='dashed')
-ax1.plot(zs, CRBy[5], color='red', linestyle='dashed')
-ax1.set_ylim(0.01, 0.11)
-ax1.set_ylabel("$CRB_{y_0}\ (\mu m)$")
-ax1.set_xlabel("$z_{p}\ (\mu m)$")
-ax1.grid()
-
-ax2 = fig.add_subplot(133)
-ax2.plot(zs, CRBz[0], color='green', label='$\lambda = 513\ nm,\ B=100$')
-ax2.plot(zs, CRBz[1], color='orange', label='$\lambda = 579\ nm,\ B=100$')
-ax2.plot(zs, CRBz[2], color='red', label='$\lambda = 683\ nm,\ B=100$')
-ax2.plot(zs, CRBz[3], color='green', linestyle='dashed', label='$\lambda = 513\ nm,\ B=400$')
-ax2.plot(zs, CRBz[4], color='orange', linestyle='dashed', label='$\lambda = 579\ nm,\ B=400$')
-ax2.plot(zs, CRBz[5], color='red', linestyle='dashed', label='$\lambda = 683\ nm,\ B=400$')
-ax2.set_ylim(0.01, 0.11)
-ax2.set_ylabel("$CRB_{z_p}\ (\mu m)$")
-ax2.set_xlabel("$z_{p}\ (\mu m)$")
-ax2.grid()
-ax2.legend(loc='upper left', bbox_to_anchor=(1, 1.05))
-plt.show()
-#
-# corrections = [ 0.00271894,  0.0043681,   0.00011607,  0.00118429, -0.00354776, -0.00162042]
-# corrections=[0,0,0,0]
-#
-# plt.imshow(psf.intensity(x0=0.05,y0=-0.01,zp=-0.5,wl=0.513,N=50000,B=0.01, corrections=corrections))
+# psf = HexPSF()
+# #
+# h1 = 2.24
+# h2 = 5.09
+# psf.set_plate([0, h1, h2, 0, h1, h2])
+# plt.imshow(add_noise(psf.intensity(0,0,0,0.513,0,100)))
 # plt.show()
 # psf.show()
-# for i in range(0, 10):
-#     plt.imshow(psf.intensity(0,0,0,0.683, corrections=[0, 0, i * np.pi/6, 0]))
-#     plt.show()
-# psf.show()
-#
-#
-# for z in [i / 10 for i in range(0, 10)]:
-#     print(z)
-#     fig, axs = plt.subplots(2, 3)
-#     axs[0][0].imshow(psf.intensity(x0=0, y0=0, zp=z, wl=0.513, corrections=[0,0,0,0]))
-#     axs[0][1].imshow(psf.intensity(x0=0, y0=0, zp=z, wl=0.579, corrections=[0,0,0,0]))
-#     axs[0][2].imshow(psf.intensity(x0=0, y0=0, zp=z, wl=0.683, corrections=[0,0,0,0]))
-#     axs[1][0].imshow(psf.intensity(x0=0, y0=0, zp=-z, wl=0.513, corrections=[0,0,0,0]))
-#     axs[1][1].imshow(psf.intensity(x0=0, y0=0, zp=-z, wl=0.579, corrections=[0,0,0,0]))
-#     axs[1][2].imshow(psf.intensity(x0=0, y0=0, zp=-z, wl=0.683, corrections=[0,0,0,0]))
-#     for i in range(0, 3):
-#         for j in range(0, 2):
-#             axs[j][i].set_xticks([])
-#             axs[j][i].set_yticks([])
-#     plt.show()
-
-    # [0, 4.989022173205141, 5.065769998975962, 1.256802167271463, 4.989022173205141, 5.065769998975962]
-    # [0, 0.13943141436376483, 0.8488720724813718, 5.39898253200691, 0.13943141436376483, 0.8488720724813718]
-    # [0, 5.353390779185647, 1.5896664598886472, 0, 5.353390779185647, 1.5896664598886472]
-    # [0, 3.1434701347896854, 5.466305658121761, 0, 3.1434701347896854, 5.466305658121761]
-    # [0, 1.5752852919312834, 5.105200002905643, 0, 1.5752852919312834, 5.105200002905643]
-    # [0, 3.7939180963605956, 1.5705311300853158, 0, 3.7939180963605956, 1.5705311300853158]
-    # [0, 5.0705097304386, 2.229193871243189, 0, 5.0705097304386, 2.229193871243189]
-    # [0, 2.8423410662996216, 4.45478806125667, 0, 2.8423410662996216, 4.45478806125667]
-    # [0, 3.8319155860217498, 0.979478867432857, 0, 3.8319155860217498, 0.979478867432857]
+# show_CRBs(psf)
