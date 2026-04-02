@@ -8,6 +8,7 @@ import os
 import pandas as pd
 from HexPSF import HexPSF
 from BlobDetectionSpherical import correct_image, highpass, uniform_small, uniform_large
+import time
 
 
 def mle_poisson_fit_psf(measured_psf, model_func,
@@ -41,8 +42,9 @@ class HexPSFFitter:
         return
 
     def HexPSF_model(self, x0, y0, zp, wl, N, B):
-        corrections = [0,0,0,0]
-        return self.psf.intensity(x0, y0, zp, wl, N, B, corrections)
+        corrections = [0,0,-0.25]
+        z_modes = [0]
+        return self.psf.intensity(x0, y0, zp, wl, N, B, corrections, z_modes)
 
 
     def fit(self, dirname):
@@ -52,17 +54,20 @@ class HexPSFFitter:
         for fname in sorted(os.listdir(dirname)):
             if fname == 'ROIs.csv' or fname == 'particles.csv' or fname == 'readme.txt':
                 continue
-            tif = np.array(correct_image(tifffile.imread(dirname + fname), gain_image=gain, offset_image=offset))[30:-30, 30:-30]
+            tif = np.array(correct_image(tifffile.imread(dirname + fname), gain_image=gain, offset_image=offset))
             tifs.append(tif)
 
         with open(dirname + 'ROIs.csv') as f:
             ROIs = f.read()
             f.close()
-        #
+        n=len(ROIs)
         ROIs = ROIs.split('\n')[1:-1]
         self.data = [['image', 'x0 (microns)', 'y0 (microns)', 'zp (microns)', 'wl (microns)','N (count)', 'B (count)', 'R^2']]
 
+        times=[]
         for row in ROIs:
+            start = time.time()
+
             row = row.split(',')
             idx = int(float(row[0]))
             x = int(float(row[1]))
@@ -72,27 +77,23 @@ class HexPSFFitter:
 
             self.x = np.linspace(0, width - 1, width) * self.psf.optics.PixelSize / self.psf.optics.M
             self.y = np.linspace(0, height - 1, height)[:, None] * self.psf.optics.PixelSize / self.psf.optics.M
-            self.dx = self.x[1] - self.x[0]
-            self.dy = self.y[1] - self.y[0]
+
             self.K = width * height
 
-            image = highpass(tifs[idx])[50:-50, 30:-30]
+            image = tifs[idx]
 
-            # fig = plt.figure()
-            # fig.set_size_inches(12, 8)
-            # ax = fig.add_subplot(1, 3, 1)
-            # ax.imshow(image)
-            # circ = plt.Circle((x+15, y+15), 15, fill=False, color='red')
-            # ax.add_patch(circ)
-
-            image = uniform_large(uniform_small(image))
+            fig = plt.figure()
+            fig.set_size_inches(12, 8)
+            ax = fig.add_subplot(1, 3, 1)
+            ax.imshow(image)
+            circ = plt.Circle((x+30, y+30), 15, fill=False, color='red')
+            ax.add_patch(circ)
 
             width = 30
             height = 30
-            image = image[y:y + 30, x:x + 30]
+            image = image[y+15:y + 45, x+15:x + 45]
 
-            B = (np.mean(image[0:, 0]) + np.mean(image[0:, width - 1]) + np.mean(image[0, 1:width - 2]) + + np.mean(
-                image[height - 1, 1:width - 2])) / 4
+            B = (np.mean(image[0:, 0]) + np.mean(image[0:, width - 1]) + np.mean(image[0, 1:width - 2]) + np.mean(image[height - 1, 1:width - 2])) / 4
 
             image = image - np.ones_like(image) * B
             img_min = np.min(image)
@@ -140,11 +141,11 @@ class HexPSFFitter:
 
             model = self.HexPSF_model(x0, y0, zp, wl, N, B)
 
-            # ax = fig.add_subplot(1, 3, 2)
-            # ax.imshow(image)
-            # ax = fig.add_subplot(1,3,3)
-            # ax.imshow(model)
-            # plt.show()
+            ax = fig.add_subplot(1, 3, 2)
+            ax.imshow(image)
+            ax = fig.add_subplot(1,3,3)
+            ax.imshow(model)
+            plt.show()
 
             data_row = [int(idx), float((x + (self.params[0] * self.psf.optics.M / self.psf.optics.PixelSize) - width / 2)),
                         float((y + (self.params[1] * self.psf.optics.M / self.psf.optics.PixelSize) - height / 2)),
@@ -152,6 +153,12 @@ class HexPSFFitter:
                         float(self.params[3]), float(self.params[4]), float(self.params[5]), float(R2)]
             print(data_row)
             self.data.append(data_row)
+            end = time.time()
+            times.append(end - start)
+
+            i += 1
+            print(f"\rFitting HexPSFs... Progress: {round(i / n * 100, 3)}%, "
+                  f"Estimated time remaining... {round((np.mean(times)) * (n-i), 3)} s", flush=True, end='')
 
         data = pd.DataFrame(self.data)
         data.to_csv(dirname + 'particles.csv')
@@ -190,26 +197,26 @@ class HexPSFFitter:
 
         # return data_row
 
-# fitter = HexPSFFitter()
-# fitter.fit('hexpsf_all_cal/')
-df = pd.read_csv('hexpsf_all_cal/particles.csv')
-zp_col = df['3'][1:]
-wl_col = df['4'][1:]
-R2_col = df['7'][1:]
-wl = []
-zp = []
-R2 = []
-for i in range(len(wl_col)):
-    i=i+1
-    wl.append(float(wl_col[i]))
-    zp.append(float(zp_col[i]))
-    R2.append(float(R2_col[i]))
-
-
-fig, ax = plt.subplots(1,3)
-
-ax[0].hist(wl, bins=40)
-ax[1].hist(zp, bins=40)
-ax[2].hist(R2, bins=40)
-
-plt.show()
+fitter = HexPSFFitter()
+fitter.fit('hexpsf_all_cal/')
+# df = pd.read_csv('hexpsf_all_cal/particles.csv')
+# zp_col = df['3'][1:]
+# wl_col = df['4'][1:]
+# R2_col = df['7'][1:]
+# wl = []
+# zp = []
+# R2 = []
+# for i in range(len(wl_col)):
+#     i=i+1
+#     wl.append(float(wl_col[i]))
+#     zp.append(float(zp_col[i]))
+#     R2.append(float(R2_col[i]))
+#
+#
+# fig, ax = plt.subplots(1,3)
+#
+# ax[0].hist(wl, bins=40)
+# ax[1].hist(zp, bins=40)
+# ax[2].hist(R2, bins=40)
+#
+# plt.show()

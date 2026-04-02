@@ -123,17 +123,21 @@ for i in range(len(Bs)):
                     truth[2][3] += 1
 
     print(truth)
-    correct[0][i] = float(truth[0][0]) / np.sum(truth[0])
-    correct[1][i] = float(truth[1][1]) / np.sum(truth[1])
-    correct[2][i] = float(truth[2][2]) / np.sum(truth[2])
+    correct[0][i] = float(truth[0][0]) / np.sum(truth[0]) * 100
+    correct[1][i] = float(truth[1][1]) / np.sum(truth[1]) * 100
+    correct[2][i] = float(truth[2][2]) / np.sum(truth[2]) * 100
     print(f"Classifying PSFs... {round((i + 1) / len(Bs) * 100, 2)}% done...", flush=True)
 
 plt.plot(Bs, correct[0], color='green', label='$\\nu_1$')
 plt.plot(Bs, correct[1], color='orange', label='$\\nu_2$')
 plt.plot(Bs, correct[2], color='red', label='$\\nu_3$')
-plt.xlabel("Background Photons per Pixel")
+plt.vlines(2500, 20, 100, label='$N=2500$', color='black', linestyle='dashed')
+plt.xlabel("Background Photons per Pixel ($B$)")
 plt.ylabel("Correct Classifications (%)")
 plt.xscale('log')
+plt.title("Classification Precision vs Background Noise")
+plt.legend()
+plt.grid(True)
 plt.show()
 
 # Test to identify signal from noise

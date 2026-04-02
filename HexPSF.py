@@ -2,10 +2,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tck
 from matplotlib.patches import RegularPolygon
+from sympy.printing.pretty.pretty_symbology import line_width
+
 import PupilPlane
 import OpticsParams
 import HexPP
 from scipy.ndimage import gaussian_filter
+
+def zernike_polynomials(j, rho, theta):
+    phase = np.zeros_like(rho)
+    for i in range(len(theta)):
+        if j == 0:
+            phase[i] += 1
+        elif j == 1:
+            phase[i] += 2 * rho[i] * np.sin(theta[i])
+        elif j == 2:
+            phase[i] += 2 * rho[i] * np.cos(theta[i])
+        elif j == 3:
+            phase[i] += np.sqrt(6) * rho[i] ** 2 * np.sin(2 * theta[i])
+        elif j == 4:
+            phase[i] += np.sqrt(3) * (2 * rho[i] ** 2 - 1)
+        elif j == 5:
+            phase[i] += np.sqrt(6) * rho[i] ** 2 * np.cos(2 * theta[i])
+    return phase
+
 
 def show_CRBs(psf):
     zs = np.array([(i - 10) / 20 for i in range(0, 21)])
@@ -46,13 +66,15 @@ def show_CRBs(psf):
     ax0.plot(zs, CRBx[3], color='green', linestyle='dashed')
     ax0.plot(zs, CRBx[4], color='orange', linestyle='dashed')
     ax0.plot(zs, CRBx[5], color='red', linestyle='dashed')
-    ax0.set_ylim(0.025, 0.115)
+    ax0.hlines(0.01, -0.5, 0.5, color='black', linestyles='dotted', linewidth=3.0)
+    ax0.set_ylim(0.005, 0.13)
     ax0.set_ylabel("$CRB_{x_0}\ (\mu m)$")
     ax0.set_xlabel("$z_{p}\ (\mu m)$")
     ax0.minorticks_on()
     ax0.yaxis.set_minor_locator(tck.AutoMinorLocator(2))
     ax0.grid()
     ax0.grid(which='minor', linestyle=':', linewidth='0.5')
+
 
     ax1 = fig.add_subplot(132)
     ax1.plot(zs, CRBy[0], color='green')
@@ -61,7 +83,8 @@ def show_CRBs(psf):
     ax1.plot(zs, CRBy[3], color='green', linestyle='dashed')
     ax1.plot(zs, CRBy[4], color='orange', linestyle='dashed')
     ax1.plot(zs, CRBy[5], color='red', linestyle='dashed')
-    ax1.set_ylim(0.025, 0.115)
+    ax1.hlines(0.01, -0.5, 0.5, color='black', linestyles='dotted', linewidth=3.0)
+    ax1.set_ylim(0.005, 0.13)
     ax1.set_ylabel("$CRB_{y_0}\ (\mu m)$")
     ax1.set_xlabel("$z_{p}\ (\mu m)$")
     ax1.minorticks_on()
@@ -76,7 +99,9 @@ def show_CRBs(psf):
     ax2.plot(zs, CRBz[3], color='green', linestyle='dashed', label='$\lambda = 513\ nm,\ B=400$')
     ax2.plot(zs, CRBz[4], color='orange', linestyle='dashed', label='$\lambda = 579\ nm,\ B=400$')
     ax2.plot(zs, CRBz[5], color='red', linestyle='dashed', label='$\lambda = 683\ nm,\ B=400$')
-    ax2.set_ylim(0.025, 0.115)
+    ax2.hlines(0.01, -0.5, 0.5, color='black', linestyles='dotted', linewidth=3.0, label='$CRB\\approx 10$ nm without Hex-PP ')
+    # ax2.set_yscale('log')
+    ax2.set_ylim(0.005, 0.13)
     ax2.set_ylabel("$CRB_{z_p}\ (\mu m)$")
     ax2.set_xlabel("$z_{p}\ (\mu m)$")
     ax2.minorticks_on()
@@ -84,6 +109,8 @@ def show_CRBs(psf):
     ax2.grid()
     ax2.grid(which='minor', linestyle=':', linewidth='0.5')
     ax2.legend(loc='upper right', bbox_to_anchor=(-1.65, 1), shadow=True, fancybox=True)
+
+
     plt.tight_layout()
     plt.show()
 
@@ -105,15 +132,14 @@ def zernike_polynomials(j, rho, theta):
             phase[i] += np.sqrt(3) * (2 * rho[i] ** 2 - 1)
         elif j == 5:
             phase[i] += np.sqrt(6) * rho[i] ** 2 * np.cos(2 * theta[i])
-
     return phase
+
 
 class HexPSF:
     def __init__(self):
         self.optics = OpticsParams.OpticsParams()
         self.Pupil_Plane = PupilPlane.PupilPlane()
         self.HexPP = HexPP.HexPP(x_off=0, y_off=0, theta_off=0, actuator_heights=[0,0,0,0,0,0])
-        self.corrections = [0,0,0,0]
 
         x = np.linspace(self.optics.PixelSize * -self.optics.K / 2,
                         self.optics.PixelSize * self.optics.K / 2,
@@ -131,7 +157,9 @@ class HexPSF:
         self.wl = np.zeros_like(self.x)
 
     def set_corrections(self, corrections):
-        self.corrections = corrections
+        self.HexPP.x_off = corrections[0]
+        self.HexPP.y_off = corrections[1]
+        self.HexPP.theta_off = corrections[2]
 
     def GibsonLaniPSFModel(self, x0, y0, zp, wl):
         x = self.x
@@ -160,10 +188,6 @@ class HexPSF:
         term3 = (NA * rho) * r * np.cos(angle_diff)
 
         # XPP term
-        self.HexPP.x_off = self.corrections[0]
-        self.HexPP.y_off = self.corrections[1]
-        self.HexPP.theta_off = self.corrections[2]
-
         hex_pp = self.HexPP.get_HexPP(rho, theta)
         term4 = (n_p - n_a) * hex_pp
 
@@ -183,7 +207,7 @@ class HexPSF:
         integral = np.sum(integrand * B_star, axis=2)
         intensity = np.real(integral * np.conj(integral))
 
-        # Return normalized intensity with Gaussian smoothing filter
+        # Return normalized intensity
         out = intensity / np.sum(intensity)
         return out
 
@@ -393,7 +417,11 @@ class HexPSF:
     def set_plate(self, plate):
         self.HexPP.actuator_heights = plate
 
-    def intensity(self, x0, y0, zp, wl, N, B):
+    def intensity(self, x0, y0, zp, wl, N, B, corrections, z_modes):
+        self.set_corrections(corrections)
+        # for i in range(len(z_modes)):
+        #     self.Pupil_Plane.Zernike += z_modes[i] * zernike_polynomials(i, self.Pupil_Plane.rho, self.Pupil_Plane.theta)
+
         # Return the intensity profile of the PSF
         self.x0 = np.array(x0, dtype=np.float32).flatten()
         self.y0 = np.array(y0, dtype=np.float32).flatten()
@@ -449,12 +477,4 @@ class HexPSF:
 
 
 
-# psf = HexPSF()
-# #
-# h1 = 2.24
-# h2 = 5.09
-# psf.set_plate([0, h1, h2, 0, h1, h2])
-# plt.imshow(add_noise(psf.intensity(0,0,0,0.513,0,100)))
-# plt.show()
-# psf.show()
 # show_CRBs(psf)

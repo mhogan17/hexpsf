@@ -96,8 +96,8 @@ def find_blobs(dirname, n):
         temp = temp2 - temp1
         r_final[i] = np.pad(temp, [(1, 0), (1, 0)], mode='constant', constant_values=[(0, 0), (0, 0)])
 
-        blobs_dog = blob_dog(r_final[i][a: -a, a: -a], min_sigma=7, max_sigma=10,
-                             sigma_ratio=1.5, threshold_rel=0.7, overlap=0.0)
+        blobs_dog = blob_dog(r_final[i][a: -a, a: -a], min_sigma=6, max_sigma=10,
+                             sigma_ratio=1.5, threshold_rel=0.1, overlap=0.0)
         blobs_dog[:, 2] = blobs_dog[:, 2] * np.sqrt(2)
         y.append(blobs_dog[:, 0])
         x.append(blobs_dog[:, 1])
@@ -105,24 +105,24 @@ def find_blobs(dirname, n):
 
         print(f"\rFinding Blobs... Progress: {round(i/n * 100, 3)}%", flush=True, end='')
         # Uncomment for plot
-        plt.imshow(r_final[i][a: -a, a: -a])
-        plt.colorbar()
-        plt.show(block=False)
-        plt.pause(1)
-        plt.close()
-
-        x0 = blobs_dog[:, 1]
-        y0 = blobs_dog[:, 0]
-        r0 = blobs_dog[:, 2]
-        fig = plt.figure()
-        ax = fig.add_subplot(1, 1, 1)
-        ax.imshow(r_final[i][a: -a, a: -a])
-        for xc, yc, rc in zip(x0, y0, r0):
-            circ = plt.Circle((xc, yc), rc, fill=False, color='red')
-            ax.add_patch(circ)
-        plt.show(block=False)
-        plt.pause(1)
-        plt.close()
+        # plt.imshow(r_final[i][a: -a, a: -a])
+        # plt.colorbar()
+        # plt.show(block=False)
+        # plt.pause(1)
+        # plt.close()
+        #
+        # x0 = blobs_dog[:, 1]
+        # y0 = blobs_dog[:, 0]
+        # r0 = blobs_dog[:, 2]
+        # fig = plt.figure()
+        # ax = fig.add_subplot(1, 1, 1)
+        # ax.imshow(r_final[i][a: -a, a: -a])
+        # for xc, yc, rc in zip(x0, y0, r0):
+        #     circ = plt.Circle((xc, yc), rc, fill=False, color='red')
+        #     ax.add_patch(circ)
+        # plt.show(block=False)
+        # plt.pause(1)
+        # plt.close()
 
 
     x = np.concatenate(x)
