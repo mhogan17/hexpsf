@@ -8,6 +8,7 @@ import os
 import pandas as pd
 from BlobDetectionSpherical import correct_image, highpass, uniform_small, uniform_large
 import matplotlib.patches as patches
+import optimparallel
 
 
 def mle_poisson_fit_psf(measured_psf, model_func,
@@ -156,4 +157,4 @@ class GaussianFitter:
 # fitter.fit('new beads/')
 
 fitter = GaussianFitter(m=67.7, pixel_size=6.5)
-fitter.fit('hexpsf_all/')
+fitter.fit('hexpsf_all_cal/')

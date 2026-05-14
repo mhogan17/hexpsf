@@ -9,7 +9,7 @@ from HexPSF import HexPSF
 
 if len(sys.argv) < 2:
     print("Usage: python3 main.py [img_directory/] [# of frames]")
-    exit(0)
+    exit()
 else:
     img_dir = sys.argv[1]
     cal_dir = sys.argv[1][0:-1] + '_cal/'
@@ -21,5 +21,5 @@ else:
     psf.set_plate([0, h1, h2, 0, h1, h2])
     psf.show()
 
-    cal = Calibrator(cal_dir)
-    cal.calibrate(psf)
+    # cal = Calibrator(cal_dir)
+    # cal.calibrate(psf)
