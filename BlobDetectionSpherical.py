@@ -88,16 +88,15 @@ def find_blobs(dirname, n):
 
     for i in range(n):
         r_final[i] = final[i][a:-a, a:-a]
-        r_final[i] = highpass(r_final[i])
-        temp1 = uniform_small(r_final[i])
+        # r_final[i] = highpass(r_final[i])
+        # temp1 = uniform_small(r_final[i])
+        #
+        # temp2 = uniform_large(temp1)
+        # temp2 = np.pad(temp2, [(2, 2), (2, 2)], mode='constant', constant_values=[(0, 0), (0, 0)])
+        # temp = temp2 - temp1
+        # r_final[i] = np.pad(temp, [(1, 0), (1, 0)], mode='constant', constant_values=[(0, 0), (0, 0)])
 
-        temp2 = uniform_large(temp1)
-        temp2 = np.pad(temp2, [(2, 2), (2, 2)], mode='constant', constant_values=[(0, 0), (0, 0)])
-        temp = temp2 - temp1
-        r_final[i] = np.pad(temp, [(1, 0), (1, 0)], mode='constant', constant_values=[(0, 0), (0, 0)])
-
-        blobs_dog = blob_dog(r_final[i][a: -a, a: -a], min_sigma=7, max_sigma=10,
-                             sigma_ratio=1.5, threshold_rel=0.7, overlap=0.0)
+        blobs_dog = blob_dog(r_final[i][a: -a, a: -a], min_sigma=5, max_sigma=7, threshold_rel=0.04, overlap=0.2)
         blobs_dog[:, 2] = blobs_dog[:, 2] * np.sqrt(2)
         y.append(blobs_dog[:, 0])
         x.append(blobs_dog[:, 1])
@@ -135,7 +134,7 @@ def find_blobs(dirname, n):
     np.savetxt(dirname + 'ROIs.csv', ROIlist, delimiter=',')
 
 
-# find_blobs('hexpsf_all/',100)
+# find_blobs('hex_beads/', 63)
 # with open(dirname + 'ROIs.csv') as f:
 #     ROIs = f.read()
 #     f.close()
